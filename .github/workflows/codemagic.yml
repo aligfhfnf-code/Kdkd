@@ -1,0 +1,35 @@
+workflows:
+  android-workflow:
+    name: Android Build
+    max_build_duration: 60
+    instance_type: mac_mini_m1 # Бесплатный мощный сервер
+    environment:
+      android_ndk: latest
+      java: 17
+    triggering:
+      events:
+        - push
+    scripts:
+      - name: Fix project structure
+        script: |
+          # Автоматически создаем правильную структуру папок для Android
+          mkdir -p app/src/main/java/com/example/carlauncher
+          mkdir -p app/src/main/res/values
+          mkdir -p gradle/wrapper
+          
+          [ -f build.gradle.kts ] && mv build.gradle.kts app/
+          [ -f MainActivity.kt ] && mv MainActivity.kt app/src/main/java/com/example/carlauncher/
+          [ -f MediaListener.kt ] && mv MediaListener.kt app/src/main/java/com/example/carlauncher/
+          [ -f Prefs.kt ] && mv Prefs.kt app/src/main/java/com/example/carlauncher/
+          [ -f AndroidManifest.xml ] && mv AndroidManifest.xml app/src/main/
+          [ -f themes.xml ] && mv themes.xml app/src/main/res/values/
+          [ -f gradle-wrapper.properties ] && mv gradle-wrapper.properties gradle/wrapper/
+          
+          echo "include(':app')" > settings.gradle.kts
+      - name: Build Android APK
+        script: |
+          cd app
+          gradle assembleDebug
+    artifacts:
+      - app/build/outputs/apk/debug/*.apk
+      
