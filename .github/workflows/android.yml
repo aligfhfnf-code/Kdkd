@@ -1,0 +1,43 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Скачивание исходного кода
+      uses: actions/checkout@v4
+
+    - name: Автоматическое создание структуры Android-проекта
+      run: |
+        mkdir -p app/src/main/java/com/example/carlauncher
+        mkdir -p app/src/main/res/values
+        mkdir -p gradle/wrapper
+        [ -f build.gradle.kts ] && mv build.gradle.kts app/
+        [ -f MainActivity.kt ] && mv MainActivity.kt app/src/main/java/com/example/carlauncher/
+        [ -f MediaListener.kt ] && mv MediaListener.kt app/src/main/java/com/example/carlauncher/
+        [ -f Prefs.kt ] && mv Prefs.kt app/src/main/java/com/example/carlauncher/
+        [ -f AndroidManifest.xml ] && mv AndroidManifest.xml app/src/main/
+        [ -f themes.xml ] && mv themes.xml app/src/main/res/values/
+        [ -f gradle-wrapper.properties ] && mv gradle-wrapper.properties gradle/wrapper/
+
+    - name: Установка Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Сборка тестового APK (Debug)
+      run: |
+        sudo apt-get update && sudo apt-get install -y gradle
+        gradle assembleDebug
+
+    - name: Сохранение готового файла
+      uses: actions/upload-artifact@v4
+      with:
+        name: my-launcher-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        
